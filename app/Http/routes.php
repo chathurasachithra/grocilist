@@ -16,3 +16,12 @@
 });*/
 
 Route::get('/', 'HomeController@getHomePage');
+
+Route::group(
+    ['prefix' => 'api'],
+    function () {
+        Route::get('/json-formats/success', 'HomeController@getSuccess');
+        Route::get('/json-formats/validation-error', 'HomeController@getValidationError');
+        Route::get('/json-formats/exception-error', 'HomeController@getExceptionError');
+    }
+);

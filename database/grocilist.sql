@@ -54,6 +54,7 @@ CREATE TABLE `trn_invite_friends` (
   `name` varchar(255) DEFAULT NULL,
   `invitation_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
+  `type` tinyint(3) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -84,7 +85,7 @@ CREATE TABLE `trn_items` (
   `quantity_in_hand` int(11) DEFAULT NULL,
   `status` tinyint(3) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -93,6 +94,7 @@ CREATE TABLE `trn_items` (
 
 LOCK TABLES `trn_items` WRITE;
 /*!40000 ALTER TABLE `trn_items` DISABLE KEYS */;
+INSERT INTO `trn_items` VALUES (1,'Mango','Kartha kolomban',NULL,'10 items',350,NULL,1),(2,'Pineapple','Hoda eka rasa eka',NULL,'1 item',120,NULL,1),(3,'Coca cola','Original one',NULL,'400ml ',140,NULL,1);
 /*!40000 ALTER TABLE `trn_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -114,7 +116,7 @@ CREATE TABLE `trn_order` (
   `instructions` varchar(255) DEFAULT NULL,
   `status` tinyint(3) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -123,6 +125,7 @@ CREATE TABLE `trn_order` (
 
 LOCK TABLES `trn_order` WRITE;
 /*!40000 ALTER TABLE `trn_order` DISABLE KEYS */;
+INSERT INTO `trn_order` VALUES (1,1,630,NULL,NULL,NULL,NULL,NULL,0);
 /*!40000 ALTER TABLE `trn_order` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -140,7 +143,7 @@ CREATE TABLE `trn_order_details` (
   `quantity` int(11) DEFAULT NULL,
   `unit_price` double DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -149,6 +152,7 @@ CREATE TABLE `trn_order_details` (
 
 LOCK TABLES `trn_order_details` WRITE;
 /*!40000 ALTER TABLE `trn_order_details` DISABLE KEYS */;
+INSERT INTO `trn_order_details` VALUES (1,1,1,1,350),(2,1,3,2,140);
 /*!40000 ALTER TABLE `trn_order_details` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -165,6 +169,8 @@ CREATE TABLE `trn_request_products` (
   `contact_no` varchar(255) DEFAULT NULL,
   `details` varchar(1000) DEFAULT NULL,
   `status` tinyint(3) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `invite_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -194,7 +200,7 @@ CREATE TABLE `trn_user` (
   `password` varchar(255) DEFAULT NULL,
   `status` tinyint(3) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -203,6 +209,7 @@ CREATE TABLE `trn_user` (
 
 LOCK TABLES `trn_user` WRITE;
 /*!40000 ALTER TABLE `trn_user` DISABLE KEYS */;
+INSERT INTO `trn_user` VALUES (1,'Chathura','cccc@gmail.com','1234567890',1,'123456',1);
 /*!40000 ALTER TABLE `trn_user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -215,4 +222,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-10-06  1:17:26
+-- Dump completed on 2016-10-07  0:18:01

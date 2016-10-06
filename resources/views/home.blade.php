@@ -34,10 +34,20 @@
                 font-size: 96px;
             }
         </style>
+
+        <script>
+            var items = <?php echo $items ?>;
+            var cart = <?php echo $cart ?>;
+            var user = <?php echo $user ?>;
+            var type = '{{$user_type}}';
+            var token = '{{$token}}';
+        </script>
+
     </head>
     <body>
         <div class="container">
             <div class="content">
+
                 <div class="title">Home page with store items</div>
                 <p> path : grocilist\resources\views\home.blade.php</p>
             </div>
