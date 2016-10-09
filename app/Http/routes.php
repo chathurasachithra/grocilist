@@ -28,6 +28,9 @@ Route::group(
          */
         Route::post('/request/product', 'RequestController@postRequestProduct');
         Route::post('/request/invite-friend', 'RequestController@postInviteFriends');
+        Route::post('/cart/manage-cart', 'RequestController@postUpdateCart');
+
+
 
         /**
          * Helper methods

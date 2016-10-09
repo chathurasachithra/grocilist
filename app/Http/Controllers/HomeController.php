@@ -258,7 +258,11 @@ class HomeController extends Controller
         return true;
     }
 
-
+    /**
+     * User login
+     *
+     * @return \Illuminate\Http\RedirectResponse|string
+     */
     public function getLogin()
     {
         // TODO not completed yet

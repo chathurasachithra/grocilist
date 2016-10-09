@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Libraries\Helper;
+use App\Models\OrderDetailsModel;
+use App\Models\OrderModel;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Input;
@@ -127,4 +129,137 @@ class RequestController extends Controller
             return $this->helper->response(500, ['message' => $ex->getMessage()]);
         }
     }
+
+    /**
+     * Update user shopping cart
+     *
+     * @return $this
+     */
+    public function postUpdateCart()
+    {
+        $data = Input::only('order_id', 'details', 'token');
+        $tokenValidate = $this->helper->validateToken($data['token']);
+        if ($tokenValidate['success']) {
+
+            /*
+             * Validate order details
+             */
+            if (is_array($data['details']) && count($data['details']) > 0) {
+
+                foreach ($data['details'] as $item) {
+                    $validator = Validator::make($item, [
+                        'item_id' => 'required|exists:trn_items,id,status,1',
+                        'quantity' => 'required|numeric|max:100'
+                    ]);
+                    if ($validator->fails()) {
+                        $errors = $validator->errors();
+                        return $this->helper->response(400, ['message' => $errors]);
+                    }
+                }
+            } else {
+                return $this->helper->response(400, ['message' => 'Invalid order details.']);
+            }
+
+            /**
+             * Validate main order
+             */
+            if ($data['order_id'] == '' || $data['order_id'] == null) {
+                $order = new OrderModel();
+                $order->status = 0;
+                $order->user_id = $tokenValidate['data']->user_id;
+                $order->user_type = $tokenValidate['data']->user_type;
+                $order->save();
+
+                $orderId = $order->id;
+            } else {
+                $order = OrderModel::select('id')
+                    ->where('id', $data['order_id'])
+                    ->where('user_id', $tokenValidate['data']->user_id)
+                    ->where('user_type', $tokenValidate['data']->user_type)
+                    ->where('status', 0)
+                    ->first();
+                if (isset($order->id)) {
+                    $orderId = $order->id;
+                } else {
+                    return $this->helper->response(400, ['message' => 'Update request for a invalid order.']);
+                }
+            }
+
+            /**
+             * Update token and save order
+             */
+            DB::table('trn_user_tokens')->where('token', $data['token'])->update(['order_id' => $orderId]);
+            $response = $this->saveOrder($orderId, $data['details']);
+            if ($response['success']) {
+                return $this->helper->response(200, ['message' => 'Order update successfully.', 'order' => $response['order']]);
+            } else {
+                return $this->helper->response(400, ['message' => $response['message']]);
+            }
+        } else {
+            return $this->helper->response(400, ['message' => 'Invalid token']);
+        }
+    }
+
+    /**
+     * Save order
+     *
+     * @param $orderId
+     * @param $details
+     * @return array
+     */
+    private function saveOrder($orderId, $details)
+    {
+        try {
+            DB::beginTransaction();
+            $total = 0;
+            DB::table('trn_order_details')->where('order_id', $orderId)->delete();
+            foreach ($details as $detail) {
+                if ($detail['quantity'] > 0) {
+                    $item = DB::table('trn_items')->select('price')->where('id', $detail['item_id'])->first();
+                    $unitPrice = 0;
+                    if (isset($item->price)) {
+                        $unitPrice = $item->price;
+                    }
+                    $orderDetail = new OrderDetailsModel();
+                    $orderDetail->order_id = $orderId;
+                    $orderDetail->item_id = $detail['item_id'];
+                    $orderDetail->quantity = $detail['quantity'];
+                    $orderDetail->unit_price = $unitPrice;
+                    $orderDetail->save();
+                    $total = $total + ($detail['quantity'] * $unitPrice);
+                }
+            }
+            $order = OrderModel::find($orderId);
+            $order->total = $total;
+            $order->save();
+            DB::commit();
+            return ['success' => true, 'order' => $this->getOrder($orderId)];
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
+    }
+
+    /**
+     * Get order details
+     *
+     * @param $orderId
+     * @return object
+     */
+    private function getOrder($orderId)
+    {
+        $order = DB::table('trn_order')
+            ->select('id', 'total', 'status')
+            ->where('id', $orderId)
+            ->first();
+        if (isset($order->id)) {
+            $orderDetails = DB::table('trn_order_details')
+                ->select('id', 'order_id', 'item_id', 'quantity', 'unit_price')
+                ->where('order_id', $order->id)
+                ->get();
+            $order->details = $orderDetails;
+        }
+        return $order;
+    }
+
 }

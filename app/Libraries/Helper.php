@@ -37,6 +37,13 @@ class Helper
         return \sha1($userId . date('Y-m-d h:i:s'));
     }
 
+    /**
+     * Generate user token
+     *
+     * @param $userID
+     * @param $userType
+     * @return string
+     */
     public function generateUserToken($userID, $userType)
     {
         $token = $this->generateToken($userID.'-'.$userType);
