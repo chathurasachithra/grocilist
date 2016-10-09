@@ -27,7 +27,7 @@ Route::group(
          * Application API calls
          */
         Route::post('/request/product', 'RequestController@postRequestProduct');
-
+        Route::post('/request/invite-friend', 'RequestController@postInviteFriends');
 
         /**
          * Helper methods

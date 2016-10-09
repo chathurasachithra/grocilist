@@ -9,5 +9,10 @@ return [
         'expired' => 4,
     ],
 
+    'invitation_request' => [
+        'invite_friend' => 1,
+        'invite_me' => 2
+    ]
+
 
 ];
