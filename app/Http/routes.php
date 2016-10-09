@@ -16,12 +16,22 @@
 });*/
 
 Route::get('/', 'HomeController@getHomePage');
+Route::get('/checkout', 'HomeController@getCheckOutPage');
+Route::get('/login', 'HomeController@getLogin');
 
 Route::group(
     ['prefix' => 'api'],
     function () {
-        Route::get('/json-formats/success', 'HomeController@getSuccess');
-        Route::get('/json-formats/validation-error', 'HomeController@getValidationError');
-        Route::get('/json-formats/exception-error', 'HomeController@getExceptionError');
+
+        /**
+         * Application API calls
+         */
+        Route::post('/request/product', 'RequestController@postRequestProduct');
+        Route::post('/request/invite-friend', 'RequestController@postInviteFriends');
+
+        /**
+         * Helper methods
+         */
+        Route::get('/create-invitations', 'HelperController@getGenerateInvitations');
     }
 );

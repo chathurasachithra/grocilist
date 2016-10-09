@@ -4,6 +4,7 @@ namespace app\Libraries;
 
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 class Helper
 {
@@ -36,6 +37,14 @@ class Helper
         return \sha1($userId . date('Y-m-d h:i:s'));
     }
 
+    public function generateUserToken($userID, $userType)
+    {
+        $token = $this->generateToken($userID.'-'.$userType);
+        DB::table('trn_user_tokens')
+            ->insert(['token' => $token, 'user_id' => $userID, 'user_type' => $userType, 'status' => 1]);
+        return $token;
+    }
+
     /**
      * @param $string
      * @return mixed
@@ -59,5 +68,47 @@ class Helper
             return number_format($value, $decimals, '.', '');
         }
         return null;
+    }
+
+    /**
+     * Check invitation code exist
+     *
+     * @param $code
+     * @return array
+     */
+    public function checkInvitation($code)
+    {
+        $data = DB::table('trn_invitations')
+            ->select('id', 'name', 'email', 'status')
+            ->where('code', $code)
+            ->whereIn('status', [config('general.invitation_status.send'), config('general.invitation_status.active')])
+            ->first();
+        if (isset($data->id)) {
+            return ['success' => true, 'data' => $data];
+        }
+        return ['success' => false];
+    }
+
+    /**
+     * Validate token
+     *
+     * @param $token
+     * @return array
+     */
+    public function validateToken($token)
+    {
+        if ($token == '' || $token == null) {
+            return ['success' => false];
+        }
+        $data = DB::table('trn_user_tokens')
+            ->select('id', 'user_type', 'user_id', 'token')
+            ->where('token', $token)
+            ->where('status', 1)
+            ->first();
+        if (isset($data->id)) {
+            return ['success' => true, 'data' => $data];
+        } else {
+            return ['success' => false];
+        }
     }
 }
