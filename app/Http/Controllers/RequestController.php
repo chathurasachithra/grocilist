@@ -137,66 +137,70 @@ class RequestController extends Controller
      */
     public function postUpdateCart()
     {
-        $data = Input::only('order_id', 'details', 'token');
-        $tokenValidate = $this->helper->validateToken($data['token']);
-        if ($tokenValidate['success']) {
+        try {
+            $data = Input::only('order_id', 'details', 'token');
+            $tokenValidate = $this->helper->validateToken($data['token']);
+            if ($tokenValidate['success']) {
 
-            /*
-             * Validate order details
-             */
-            if (is_array($data['details']) && count($data['details']) > 0) {
+                /*
+                 * Validate order details
+                 */
+                if (is_array($data['details']) && count($data['details']) > 0) {
 
-                foreach ($data['details'] as $item) {
-                    $validator = Validator::make($item, [
-                        'item_id' => 'required|exists:trn_items,id,status,1',
-                        'quantity' => 'required|numeric|max:100'
-                    ]);
-                    if ($validator->fails()) {
-                        $errors = $validator->errors();
-                        return $this->helper->response(400, ['message' => $errors]);
+                    foreach ($data['details'] as $item) {
+                        $validator = Validator::make($item, [
+                            'item_id' => 'required|exists:trn_items,id,status,1',
+                            'quantity' => 'required|numeric|max:100'
+                        ]);
+                        if ($validator->fails()) {
+                            $errors = $validator->errors();
+                            return $this->helper->response(400, ['message' => $errors]);
+                        }
                     }
+                } else {
+                    return $this->helper->response(400, ['message' => 'Invalid order details.']);
                 }
-            } else {
-                return $this->helper->response(400, ['message' => 'Invalid order details.']);
-            }
 
-            /**
-             * Validate main order
-             */
-            if ($data['order_id'] == '' || $data['order_id'] == null) {
-                $order = new OrderModel();
-                $order->status = 0;
-                $order->user_id = $tokenValidate['data']->user_id;
-                $order->user_type = $tokenValidate['data']->user_type;
-                $order->save();
+                /**
+                 * Validate main order
+                 */
+                if ($data['order_id'] == '' || $data['order_id'] == null) {
+                    $order = new OrderModel();
+                    $order->status = 0;
+                    $order->user_id = $tokenValidate['data']->user_id;
+                    $order->user_type = $tokenValidate['data']->user_type;
+                    $order->save();
 
-                $orderId = $order->id;
-            } else {
-                $order = OrderModel::select('id')
-                    ->where('id', $data['order_id'])
-                    ->where('user_id', $tokenValidate['data']->user_id)
-                    ->where('user_type', $tokenValidate['data']->user_type)
-                    ->where('status', 0)
-                    ->first();
-                if (isset($order->id)) {
                     $orderId = $order->id;
                 } else {
-                    return $this->helper->response(400, ['message' => 'Update request for a invalid order.']);
+                    $order = OrderModel::select('id')
+                        ->where('id', $data['order_id'])
+                        ->where('user_id', $tokenValidate['data']->user_id)
+                        ->where('user_type', $tokenValidate['data']->user_type)
+                        ->where('status', 0)
+                        ->first();
+                    if (isset($order->id)) {
+                        $orderId = $order->id;
+                    } else {
+                        return $this->helper->response(400, ['message' => 'Update request for a invalid order.']);
+                    }
                 }
-            }
 
-            /**
-             * Update token and save order
-             */
-            DB::table('trn_user_tokens')->where('token', $data['token'])->update(['order_id' => $orderId]);
-            $response = $this->saveOrder($orderId, $data['details']);
-            if ($response['success']) {
-                return $this->helper->response(200, ['message' => 'Order update successfully.', 'order' => $response['order']]);
+                /**
+                 * Update token and save order
+                 */
+                DB::table('trn_user_tokens')->where('token', $data['token'])->update(['order_id' => $orderId]);
+                $response = $this->saveOrder($orderId, $data['details']);
+                if ($response['success']) {
+                    return $this->helper->response(200, ['message' => 'Order update successfully.', 'order' => $response['order']]);
+                } else {
+                    return $this->helper->response(400, ['message' => $response['message']]);
+                }
             } else {
-                return $this->helper->response(400, ['message' => $response['message']]);
+                return $this->helper->response(400, ['message' => 'Invalid token']);
             }
-        } else {
-            return $this->helper->response(400, ['message' => 'Invalid token']);
+        } catch (\Exception $ex) {
+            return $this->helper->response(500, ['message' => $ex->getMessage()]);
         }
     }
 
@@ -262,4 +266,114 @@ class RequestController extends Controller
         return $order;
     }
 
+    public function postCheckOut()
+    {
+        $data = Input::only('name', 'mobile', 'address', 'time_slot', 'instructions', 'email', 'password', 'token');
+        $tokenValidate = $this->helper->validateToken($data['token']);
+        if ($tokenValidate['success']) {
+            $userType = $this->helper->getUserTypeByToken($data['token']);
+            $userId = $this->helper->getUserIdByToken($data['token']);
+            $orderId = $this->helper->getOrderIdByToken($data['token']);
+            if ($userType == 3) {
+                return $this->helper->response(400, ['message' => 'Guest user cannot add orders.']);
+            }
+            $order = DB::table('trn_order')->select('id')->where('id', $orderId)->where('status', 0)->first();
+            if (!isset($order->id)) {
+                return $this->helper->response(400, ['message' => 'Cannot find any order data.']);
+            }
+
+            $messages = [
+                'script_tags_free' => 'The :attribute contain invalid tags.',
+            ];
+            $validator = Validator::make($data, [
+                'name' => 'required|max:255|script_tags_free',
+                'mobile' => 'required|max:255|script_tags_free',
+                'address' => 'required|max:255|script_tags_free',
+                'time_slot' => 'required|max:255|script_tags_free',
+                'instructions' => 'required|max:255|script_tags_free'
+            ], $messages);
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                return $this->helper->response(400, ['message' => $errors]);
+            } else {
+
+                if ($userType == 1) {
+                    if (filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
+                        return $this->helper->response(400, ['message' => 'Invalid email']);
+                    }
+                    if (empty($data['password'])) {
+                        return $this->helper->response(400, ['message' => 'Invalid password']);
+                    }
+                    $emailCount = DB::table('trn_user')->where('email', $data['email'])->count();
+                    if ($emailCount > 0) {
+                        return $this->helper->response(400, ['message' => 'Email already registered']);
+                    }
+
+                    DB::table('trn_invitations')->where('id', $userId)->update(['status' => 4]);
+                    $userId = DB::table('trn_user')->insertGetId(
+                        [
+                            'name' => $data['name'],
+                            'email' => $data['email'],
+                            'password' => \sha1($data['password']),
+                            'mobile' => $data['mobile'],
+                            'status' => 1,
+                            'invitation_id' => $userId
+                        ]
+                    );
+                    $userType = 2;
+                }
+
+                DB::table('trn_order')->where('id', $orderId)->update([
+                    'status' => 1,
+                    'name' => $data['name'],
+                    'mobile' => $data['mobile'],
+                    'address' => $data['address'],
+                    'time_slot' => $data['time_slot'],
+                    'instructions' => $data['instructions'],
+                    'user_id' => $userId,
+                    'user_type' => $userType
+                ]);
+                DB::table('trn_user_tokens')
+                    ->where('token', $data['token'])
+                    ->update(['user_type' => $userType, 'user_id' => $userId, 'order_id' => null]);
+
+                $order = $this->getOrder($orderId);
+                $user = DB::table('trn_user')->where('id', $userId)->first();
+                foreach ($order->details as $detail) {
+                    $detail->item = DB::table('trn_items')->select('name')->where('id', $detail->item_id)->first();
+
+                }
+                $this->sendMail(
+                    $user->email,
+                    ['user' => $user, 'order' => $order],
+                    'order-email'
+                );
+                return $this->helper->response(200, ['message' => 'Your order successfully delivered.', 'order' => $order]);
+            }
+        } else {
+            return $this->helper->response(400, ['message' => 'Invalid token']);
+        }
+    }
+
+    /**
+     * Send email
+     *
+     * @param $email
+     * @param $body
+     * @param $template
+     * @return bool
+     */
+    private function sendMail($email, $body, $template)
+    {
+        try {
+            \Mail::queue($template, $body, function ($message) use ($email) {
+                $message->from('chathura.f@eyepax.com', 'Grocilist');
+                $message->subject('Your order received');
+                $message->to($email);
+            });
+            return true;
+        } catch (\Exception $ex) {
+            return false;
+        }
+    }
 }

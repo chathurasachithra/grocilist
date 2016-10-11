@@ -17,7 +17,7 @@
 
 Route::get('/', 'HomeController@getHomePage');
 Route::get('/checkout', 'HomeController@getCheckOutPage');
-Route::get('/login', 'HomeController@getLogin');
+
 
 Route::group(
     ['prefix' => 'api'],
@@ -26,9 +26,14 @@ Route::group(
         /**
          * Application API calls
          */
+        Route::post('/login', 'HomeController@postLogin');
         Route::post('/request/product', 'RequestController@postRequestProduct');
         Route::post('/request/invite-friend', 'RequestController@postInviteFriends');
         Route::post('/cart/manage-cart', 'RequestController@postUpdateCart');
+        Route::post('/cart/check-out', 'RequestController@postCheckOut');
+
+        Route::get('/test', 'RequestController@getTest');
+
 
 
 

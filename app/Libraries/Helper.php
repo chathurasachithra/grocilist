@@ -118,4 +118,64 @@ class Helper
             return ['success' => false];
         }
     }
+
+    /**
+     * Get user type by token
+     *
+     * @param $token
+     * @return string
+     */
+    public function getUserTypeByToken($token)
+    {
+        $data = DB::table('trn_user_tokens')
+            ->select('id', 'user_type', 'user_id', 'token')
+            ->where('token', $token)
+            ->first();
+        if (isset($data->user_type)) {
+            return $data->user_type;
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * Get user id by token
+     *
+     * @param $token
+     * @return string
+     */
+    public function getUserIdByToken($token)
+    {
+        $data = DB::table('trn_user_tokens')
+            ->select('id', 'user_type', 'user_id', 'token')
+            ->where('token', $token)
+            ->first();
+        if (isset($data->user_id)) {
+            return $data->user_id;
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * Get order id by token
+     *
+     * @param $token
+     * @return string
+     */
+    public function getOrderIdByToken($token)
+    {
+        $data = DB::table('trn_user_tokens')
+            ->select('id', 'user_type', 'order_id', 'token')
+            ->where('token', $token)
+            ->first();
+        if (isset($data->order_id)) {
+            return $data->order_id;
+        } else {
+            return '';
+        }
+    }
+
+
+
 }
