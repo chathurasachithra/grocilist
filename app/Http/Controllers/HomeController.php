@@ -42,7 +42,7 @@ class HomeController extends Controller
         if (Input::has('logout') && Input::get('logout') == 'true') {
             if ($this->request->session()->has('logged-user')) {
                 $userSessionData = $this->request->session()->get('logged-user');
-                if ($userSessionData['userType'] == 2) {
+                if ($this->helper->getUserTypeByToken($userSessionData['token']) == 2) {
                     $this->request->session()->forget('logged-user');
                     $this->request->session()->save();
                     $messageData = ['status' => true, 'type' => 'success', 'message' => 'User logout successfully.'];
@@ -80,9 +80,10 @@ class HomeController extends Controller
 
                 if ($this->request->session()->has('logged-user')) {
                     $oldSessionData = $this->request->session()->get('logged-user');
-                    if($oldSessionData['userType'] == 3) {
+                    $oldSessionUserType = $this->helper->getUserTypeByToken($oldSessionData['token']);
+                    if($oldSessionUserType == 3) {
                         $this->createNewInviteUserSession($invite, $codeDetails);
-                    } else if ($oldSessionData['userType'] == 1) {
+                    } else if ($oldSessionUserType == 1) {
                         $sessionInviteCode = $oldSessionData['invitation']['code'];
                         if ($sessionInviteCode != $invite) {
                             $this->createNewInviteUserSession($invite, $codeDetails);
@@ -103,7 +104,6 @@ class HomeController extends Controller
         if ($this->request->session()->has('logged-user')) {
             $sessionData = $this->request->session()->get('logged-user');
         } else {
-            $sessionData['userType'] = 3;
             $sessionData['token'] = $this->helper->generateUserToken('guest', 3);
             $this->request->session()->put('logged-user', $sessionData);
             $this->request->session()->save();
@@ -135,12 +135,13 @@ class HomeController extends Controller
         /**
          * Get user details
          */
-        if ($sessionData['userType'] == 1) {
+        $sessionUserType = $this->helper->getUserTypeByToken($sessionData['token']);
+        if ($sessionUserType == 1) {
             $user = $sessionData['invitation'];
-        } else if ($sessionData['userType'] == 2) {
+        } else if ($sessionUserType == 2) {
             $user = DB::table('trn_user')
                 ->select('id', 'name', 'email')
-                ->where('id', $sessionData['userId'])
+                ->where('id', $this->helper->getUserIdByToken($sessionData['token']))
                 ->first();
         } else {
             $user = ['name' => 'Guest'];
@@ -149,16 +150,15 @@ class HomeController extends Controller
         return [
             'flash_area' => $messageData,
             'items' => json_encode($items),
-            'user_type' => $sessionData['userType'],
+            'user_type' => $sessionUserType,
             'cart' => json_encode($order),
             'token' => $sessionData['token'],
-            'user' => json_encode($user),
-        'csrf_token' => csrf_field()];
+            'user' => json_encode($user)];
 
         return view('home', [
             'flash_area' => $messageData,
             'items' => json_encode($items),
-            'user_type' => $sessionData['userType'],
+            'user_type' => $sessionUserType,
             'cart' => json_encode($order),
             'token' => $sessionData['token'],
             'user' => json_encode($user)]);
@@ -181,7 +181,6 @@ class HomeController extends Controller
         if ($this->request->session()->has('logged-user')) {
             $sessionData = $this->request->session()->get('logged-user');
         } else {
-            $sessionData['userType'] = 3;
             $sessionData['token'] = $this->helper->generateUserToken('guest', 3);
             $this->request->session()->put('logged-user', $sessionData);
             $this->request->session()->save();
@@ -213,12 +212,13 @@ class HomeController extends Controller
         /**
          * Get user details
          */
-        if ($sessionData['userType'] == 1) {
+        $sessionUserType = $this->helper->getUserTypeByToken($sessionData['token']);
+        if ($sessionUserType == 1) {
             $user = $sessionData['invitation'];
-        } else if ($sessionData['userType'] == 2) {
+        } else if ($sessionUserType == 2) {
             $user = DB::table('trn_user')
                 ->select('id', 'name', 'email')
-                ->where('id', $sessionData['userId'])
+                ->where('id', $this->helper->getUserIdByToken($sessionData['token']))
                 ->first();
         } else {
             $user = ['name' => 'Guest'];
@@ -226,14 +226,14 @@ class HomeController extends Controller
 
         return [
             'items' => json_encode($items),
-            'user_type' => $sessionData['userType'],
+            'user_type' => $sessionUserType,
             'cart' => json_encode($order),
             'token' => $sessionData['token'],
             'user' => json_encode($user)];
 
         return view('checkout', [
             'items' => json_encode($items),
-            'user_type' => $sessionData['userType'],
+            'user_type' => $sessionUserType,
             'cart' => json_encode($order),
             'token' => $sessionData['token'],
             'user' => json_encode($user)]);
@@ -249,7 +249,6 @@ class HomeController extends Controller
     private function createNewInviteUserSession($invite, $codeDetails)
     {
         $newSessionData = [];
-        $newSessionData['userType'] = 1;
         $newSessionData['invitation'] = ['code' => $invite, 'name' => $codeDetails->name, 'email' => $codeDetails->email];
         $newSessionData['token'] = $this->helper->generateUserToken($codeDetails->id, 1);
         $this->request->session()->forget('logged-user');
@@ -258,33 +257,54 @@ class HomeController extends Controller
         return true;
     }
 
-
-    public function getLogin()
+    /**
+     * User login
+     *
+     * @return \Illuminate\Http\RedirectResponse|string
+     */
+    public function postLogin()
     {
-        // TODO not completed yet
-        $data = Input::only('email', 'password');
-        if (filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
-            return 'invalid email';
-        }
-        if (empty($data['password'])) {
-            return 'invalid password';
-        }
-        $user = DB::table('trn_user')
-            ->select('id', 'name', 'password')
-            ->where('email', $data['email'])
-            ->where('status', 1)
-            ->first();
-        if (isset($user->password) && $user->password == \sha1($data['password'])) {
-            $newSessionData = [];
-            $newSessionData['userType'] = 2;
-            $newSessionData['userId'] = $user->id;
-            $newSessionData['token'] = $this->helper->generateUserToken($user->id, 2);
-            $this->request->session()->forget('logged-user');
-            $this->request->session()->put('logged-user', $newSessionData);
-            $this->request->session()->save();
-            return redirect()->action('HomeController@getHomePage');
-        } else {
-            return 'invalid login details';
+        try {
+            // TODO not completed yet
+            $data = Input::only('email', 'password', 'token');
+            $tokenValidate = $this->helper->validateToken($data['token']);
+            if ($tokenValidate['success']) {
+                if (filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
+                    return $this->helper->response(400, ['message' => 'Invalid email']);
+                }
+                if (empty($data['password'])) {
+                    return $this->helper->response(400, ['message' => 'Invalid password']);
+                }
+                $user = DB::table('trn_user')
+                    ->select('id', 'name', 'password')
+                    ->where('email', $data['email'])
+                    ->where('status', 1)
+                    ->first();
+                if (isset($user->password) && $user->password == \sha1($data['password'])) {
+                    /*$newSessionData = [];
+                    $newSessionData['token'] = $this->helper->generateUserToken($user->id, 2);
+                    $this->request->session()->forget('logged-user');
+                    $this->request->session()->put('logged-user', $newSessionData);
+                    $this->request->session()->save();*/
+
+                    DB::table('trn_user_tokens')
+                        ->where('token', $data['token'])
+                        ->update(['user_type' => 2, 'user_id' => $user->id]);
+
+                    $user = DB::table('trn_user')
+                        ->select('id', 'name', 'email')
+                        ->where('id', $user->id)
+                        ->first();
+
+                    return $this->helper->response(200, ['message' => 'Successfully login.', 'user' => $user]);
+                } else {
+                    return $this->helper->response(400, ['message' => 'Invalid login details']);
+                }
+            } else {
+                return $this->helper->response(400, ['message' => 'Invalid token']);
+            }
+        } catch (\Exception $ex) {
+            return $this->helper->response(500, ['message' => $ex->getMessage()]);
         }
     }
 }
