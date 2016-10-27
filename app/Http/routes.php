@@ -18,6 +18,10 @@
 Route::get('/', 'HomeController@getHomePage');
 Route::get('/checkout', 'HomeController@getCheckOutPage');
 
+/**
+ * Admin methods
+ */
+Route::get('/wc-admin/all-orders', 'AdminController@getAllOrders');
 
 Route::group(
     ['prefix' => 'api'],
@@ -33,8 +37,6 @@ Route::group(
         Route::post('/cart/check-out', 'RequestController@postCheckOut');
 
         Route::get('/test', 'RequestController@getTest');
-
-
 
 
         /**

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Laravel</title>
+        <title>404</title>
 
-        {{--<link href="https://fonts.googleapis.com/css?family=Lato:100" rel="stylesheet" type="text/css">--}}
+        <link href="https://fonts.googleapis.com/css?family=Lato:100" rel="stylesheet" type="text/css">
 
         <style>
             html, body {
@@ -14,6 +14,7 @@
                 margin: 0;
                 padding: 0;
                 width: 100%;
+                color: #B0BEC5;
                 display: table;
                 font-weight: 100;
                 font-family: 'Lato';
@@ -31,21 +32,15 @@
             }
 
             .title {
-                font-size: 96px;
+                font-size: 72px;
+                margin-bottom: 40px;
             }
         </style>
-
-        <script>
-            var data = <?php echo $data ?>;
-        </script>
-
     </head>
     <body>
         <div class="container">
             <div class="content">
-
-                <div class="title">Home page with store items</div>
-                <p> path : grocilist\resources\views\home.blade.php</p>
+                <div class="title">404 <br> Sorry, the page you are looking for does not exist</div>
             </div>
         </div>
     </body>

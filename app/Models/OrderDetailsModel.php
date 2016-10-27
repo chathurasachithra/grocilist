@@ -14,4 +14,9 @@ class OrderDetailsModel extends Model
     protected $table = 'trn_order_details';
 
     protected $fillable = ['order_id', 'item_id', 'quantity', 'unit_price'];
+
+    public function item()
+    {
+        return $this->hasOne('App\Models\ItemModel', 'id', 'item_id');
+    }
 }

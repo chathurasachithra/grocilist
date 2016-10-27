@@ -14,4 +14,9 @@ class OrderModel extends Model
     protected $table = 'trn_order';
 
     protected $fillable = ['user_id', 'total', 'name', 'mobile', 'address', 'time_slot', 'instructions', 'status', 'user_type', 'created_at', 'updated_at'];
+
+    public function orderDetails()
+    {
+        return $this->hasMany('App\Models\OrderDetailsModel', 'order_id', 'id');
+    }
 }

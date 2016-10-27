@@ -147,21 +147,42 @@ class HomeController extends Controller
             $user = ['name' => 'Guest'];
         }
 
-        return [
-            'flash_area' => $messageData,
-            'items' => json_encode($items),
-            'user_type' => $sessionUserType,
-            'cart' => json_encode($order),
-            'token' => $sessionData['token'],
-            'user' => json_encode($user)];
+        /**
+         * Update cart details with item
+         */
+        foreach ($items as $item) {
+            $currentItem = 0;
+            if (isset($order->id)) {
+                $orderItem = DB::table('trn_order_details')
+                    ->select('id', 'quantity')
+                    ->where('order_id', $order->id)
+                    ->where('item_id', $item->id)
+                    ->first();
+                if (isset($orderItem->quantity) && $orderItem->quantity > 0) {
+                    $currentItem = $orderItem->quantity;
+                }
 
-        return view('home', [
+            }
+            $item->cart_count = $currentItem;
+        }
+
+        /*return [
             'flash_area' => $messageData,
-            'items' => json_encode($items),
+            'items' => $items,
             'user_type' => $sessionUserType,
-            'cart' => json_encode($order),
+            'cart' => $order,
             'token' => $sessionData['token'],
-            'user' => json_encode($user)]);
+            'user' => $user];*/
+
+		$data = [
+            'items' => $items,
+            'cart' => $order,
+            'user_type' => $sessionUserType,
+            'user' => $user,
+            'token' => $sessionData['token'],
+            'flash_area' => $messageData
+        ];
+        return view('home', ['data' => json_encode($data)]);        
     }
 
     public function getCheckOutPage()
