@@ -169,16 +169,15 @@ class HomeController extends Controller
         /*return [
             'flash_area' => $messageData,
             'items' => $items,
-            'user_type' => $sessionUserType,
             'cart' => $order,
             'token' => $sessionData['token'],
-            'user' => $user];*/
+            'user' => ['type' => $sessionUserType, 'details' => $user]
+        ];*/
 
 		$data = [
             'items' => $items,
             'cart' => $order,
-            'user_type' => $sessionUserType,
-            'user' => $user,
+            'user' => ['type' => $sessionUserType, 'details' => $user],
             'token' => $sessionData['token'],
             'flash_area' => $messageData
         ];
@@ -245,19 +244,20 @@ class HomeController extends Controller
             $user = ['name' => 'Guest'];
         }
 
-        return [
-            'items' => json_encode($items),
-            'user_type' => $sessionUserType,
-            'cart' => json_encode($order),
+        /*return [
+            'items' => $items,
+            'cart' => $order,
             'token' => $sessionData['token'],
-            'user' => json_encode($user)];
+            'user' => ['type' => $sessionUserType, 'details' => $user]
+        ];*/
 
-        return view('checkout', [
-            'items' => json_encode($items),
-            'user_type' => $sessionUserType,
-            'cart' => json_encode($order),
-            'token' => $sessionData['token'],
-            'user' => json_encode($user)]);
+        $data = [
+            'items' => $items,
+            'cart' => $order,
+            'user' => ['type' => $sessionUserType, 'details' => $user],
+            'token' => $sessionData['token']
+        ];
+        return view('checkout', ['data' => json_encode($data)]);
     }
 
     /**

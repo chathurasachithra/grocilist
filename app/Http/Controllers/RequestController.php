@@ -253,7 +253,7 @@ class RequestController extends Controller
     private function getOrder($orderId)
     {
         $order = DB::table('trn_order')
-            ->select('id', 'total', 'status')
+            ->select('id', 'total', 'status', 'address')
             ->where('id', $orderId)
             ->first();
         if (isset($order->id)) {
@@ -367,7 +367,7 @@ class RequestController extends Controller
     {
         try {
             \Mail::queue($template, $body, function ($message) use ($email) {
-                $message->from('chathura.f@eyepax.com', 'Grocilist');
+                $message->from('info@goodzpply.com', 'Grocilist');
                 $message->subject('Your order received');
                 $message->to($email);
             });
@@ -375,5 +375,20 @@ class RequestController extends Controller
         } catch (\Exception $ex) {
             return false;
         }
+    }
+
+
+    public function getTest() {
+        $order = $this->getOrder(9);
+        $user = DB::table('trn_user')->where('id', 2)->first();
+        foreach ($order->details as $detail) {
+            $detail->item = (array)DB::table('trn_items')->select('name')->where('id', $detail->item_id)->first();
+        }
+
+        $order->details[0] = (array)$order->details[0];
+        $order->details[1] = (array)$order->details[1];
+
+        return view('order-email', ['user' => (array)$user, 'order' => (array)$order]);
+
     }
 }

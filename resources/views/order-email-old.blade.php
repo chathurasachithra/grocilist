@@ -11,7 +11,7 @@
             margin:0;
             padding:0;
         }
-        * { font-family: "Roboto", sans-serif; }
+        * { font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif; }
 
         img {
             max-width: 100%;
@@ -111,7 +111,7 @@
                 TYPOGRAPHY
         ------------------------------------- */
         h1,h2,h3,h4,h5,h6 {
-            font-family: "Roboto", sans-serif; line-height: 1.1; margin-bottom:6px; color:#000;
+            font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; line-height: 1.1; margin-bottom:15px; color:#000;
         }
         h1 small, h2 small, h3 small, h4 small, h5 small, h6 small { font-size: 60%; color: #6f6f6f; line-height: 0; text-transform: none; }
 
@@ -125,10 +125,10 @@
         .collapse { margin:0!important;}
 
         p, ul {
-            margin-bottom: 6px;
+            margin-bottom: 10px;
             font-weight: normal;
             font-size:14px;
-            line-height:1.2;
+            line-height:1.6;
         }
         p.lead { font-size:17px; }
         p.last { margin-bottom:0px;}
@@ -211,15 +211,15 @@
 <body bgcolor="#FFFFFF">
 
 <!-- HEADER -->
-<table class="head-wrap" bgcolor="#ffffff">
+<table class="head-wrap" bgcolor="#07c748">
     <tr>
         <td></td>
         <td class="header container">
 
             <div class="content">
-                <table bgcolor="#ffffff">
+                <table bgcolor="#07c748">
                     <tr>
-                        <td align="left">
+                        <td align="center">
                             <h6 class="collapse">Order confirmation email</h6>
                         </td>
                     </tr>
@@ -252,23 +252,44 @@
                             <br/>
 
                             <h5>Your order - #{{ sprintf('%08d', $order['id']) }}</h5>
+                            <!-- Totals -->
+                            <table class="columns" width="100%">
+                                <tr>
+                                    <td>Item</td>
+                                    <td align="right">Price</td>
+                                    <td align="right">Quantity</td>
+                                    <td align="right">Row total</td>
+                                </tr>
 
-                            @foreach ($order['details'] as $detail)
-                                <p>{{ $detail['quantity'] }} X {{ $detail['item']['name'] }} - Rs. {{ number_format($detail['quantity'] * $detail['unit_price'], 2) }}</p>
+                                @foreach ($order['details'] as $detail)
+                                    <tr>
+                                        <td>{{ $detail['item']['name'] }}</td>
+                                        <td align="right">{{ number_format($detail['unit_price'], 2) }}</td>
+                                        <td align="right">{{ $detail['quantity'] }}</td>
+                                        <td align="right">{{ number_format($detail['quantity'] * $detail['unit_price'], 2) }}</td>
+                                    </tr>
+                                @endforeach
 
-                            @endforeach
-                            <br/>
-                            <p>Delivery fee - FREE</p>
-                            <p>Total to be paid - {{ number_format($order['total'], 2) }}</p>
-                            <br/>
-                            <h5>Delivery address</h5>
-                            <p>{{ $order['address'] }}</p>
-                            <br/>
-                            <p>Thank you for using GoodZupply!</p>
-                            <br/>
-                            <p>-</p>
-                            <p>Ravi from GoodZupply</p>
-                            <p>Hotline 071 999 9999</p>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td><hr></td>
+                                </tr>
+                                <tr>
+                                    <td><b>Subtotal:</b></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td align="right">{{ number_format($order['total'], 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td><hr><hr></td>
+                                </tr>
+                            </table>
+                            <!-- /Totals -->
 
 
                         </td>
@@ -282,6 +303,30 @@
 </table>
 <!-- /BODY -->
 
+<!-- FOOTER -->
+<table class="footer-wrap" bgcolor="#0c9b5b">
+    <tr>
+        <td></td>
+        <td class="container">
+
+            <!-- content -->
+            <div class="content">
+                <table>
+                    <tr>
+                        <td align="center">
+                            <p>Thank you for shopping at <a href="" style="color:#111111;">grocilist</a>!</p>
+                            <br/><br/>
+                            <p><strong><a href="" style="color:#111111;">info@grocilist.com</a></strong></p>
+                            <p><small>© grocilist</small></p>
+                        </td>
+                    </tr>
+                </table>
+            </div><!-- /content -->
+
+        </td>
+        <td></td>
+    </tr>
+</table><!-- /FOOTER -->
 
 </body>
 </html>
